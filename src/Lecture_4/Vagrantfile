@@ -1,0 +1,34 @@
+Vagrant.configure("2") do |config|
+ 
+ 
+    # VM1 ,VM4, VM15, VM6 : Public web server with dynamic IP
+  def create_vm(config, name)
+    config.vm.define name do |vm|
+      vm.vm.box = "bento/ubuntu-24.04"
+      vm.vm.network "public_network", type: "dhcp"
+      vm.vm.synced_folder "./shared_#{name}", "/home/vagrant/shared_#{name}"
+      vm.vm.provision "shell", inline: "sudo apt update && sudo apt install -y nginx"
+    end
+  end
+
+  
+  ["vm1", "vm4", "vm5", "vm6"].each do |name|
+    create_vm(config, name)
+  end
+
+
+  # VM2: Private server with static IP
+  config.vm.define "vm2" do |vm2|
+    vm2.vm.box = "bento/ubuntu-24.04"
+    vm2.vm.network "private_network", ip: "192.168.56.10"
+    vm2.vm.synced_folder "./shared_vm2", "/home/vagrant/shared_vm2"
+    vm2.vm.provision "shell", path: "setup_vm2.sh"
+  end
+
+  # VM3: Public server with static IP (bridge connection)
+  config.vm.define "vm3" do |vm3|
+    vm3.vm.box = "bento/ubuntu-24.04"
+    vm3.vm.network "public_network", ip: "192.168.1.100", bridge: "en0"
+    vm3.vm.synced_folder "./shared_vm3", "/home/vagrant/shared_vm3"
+  end
+end
